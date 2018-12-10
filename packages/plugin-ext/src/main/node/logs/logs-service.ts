@@ -45,14 +45,14 @@ export class LogServiceImpl implements LogService {
             return Promise.reject('Unable to get parent log directory');
         }
 
-        if (parentLogDir && !this.fs.exists(parentLogDir)) {
-            this.fs.createFolder(parentLogDir);
+        if (parentLogDir && await !this.fs.exists(parentLogDir)) {
+            await this.fs.createFolder(parentLogDir);
         }
 
         const pluginDirPath = join(parentLogDir, this.gererateTimeFolderName(), 'host');
         console.log('resolved plugin path is ' + pluginDirPath + ' this path exists ' + (await this.fs.exists(pluginDirPath)));
         if (! await this.fs.exists(pluginDirPath)) {
-            this.fs.createFolder(pluginDirPath);
+            await this.fs.createFolder(pluginDirPath);
         }
 
         return new URI(pluginDirPath).path.toString();
@@ -63,7 +63,7 @@ export class LogServiceImpl implements LogService {
         return new Date().toISOString().replace(/[-:]|(\..*)/g, '');
     }
 
-    async getParentLogDirPath(): Promise<string | undefined> { // Todo cache this path
+    async getParentLogDirPath(): Promise<string | undefined> {
         const userHomeDir = await this.fs.getCurrentUserHome();
         let parentLogDirPath;
         if (userHomeDir) {

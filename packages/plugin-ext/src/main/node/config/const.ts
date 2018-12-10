@@ -16,7 +16,7 @@
 
 export namespace PluginConf {
     export const LINUX_CONF_FOLDER = '.config';
-    export const APPLICATION_CONF_FOLDER = 'Theia';
+    export const APPLICATION_CONF_FOLDER = 'eclipse-theia';
     export const APP_DATA_WINDOWS_FOLDER = 'AppData';
     export const ROAMING_WINDOWS_FOLDER = 'Roaming';
 }
