@@ -50,7 +50,6 @@ export class LogServiceImpl implements LogService {
         }
 
         const pluginDirPath = join(parentLogDir, this.gererateTimeFolderName(), 'host');
-        console.log('resolved plugin path is ' + pluginDirPath + ' this path exists ' + (await this.fs.exists(pluginDirPath)));
         if (! await this.fs.exists(pluginDirPath)) {
             await this.fs.createFolder(pluginDirPath);
         }
