@@ -1669,41 +1669,25 @@ export class Breakpoint {
     /**
      * Is breakpoint enabled.
      */
-    private _enabled: boolean;
+    enabled: boolean;
     /**
      * An optional expression for conditional breakpoints.
      */
-    private _condition?: string;
+    condition?: string;
     /**
      * An optional expression that controls how many hits of the breakpoint are ignored.
      */
-    private _hitCondition?: string;
+    hitCondition?: string;
     /**
      * An optional message that gets logged when this breakpoint is hit. Embedded expressions within {} are interpolated by the debug adapter.
      */
-    private _logMessage?: string;
+    logMessage?: string;
 
     protected constructor(enabled?: boolean, condition?: string, hitCondition?: string, logMessage?: string) {
-        this._enabled = enabled || false;
-        this._condition = condition;
-        this._hitCondition = hitCondition;
-        this._logMessage = logMessage;
-    }
-
-    get enabled(): boolean {
-        return this._enabled;
-    }
-
-    get condition(): string | undefined {
-        return this._condition;
-    }
-
-    get hitCondition(): string | undefined {
-        return this._hitCondition;
-    }
-
-    get logMessage(): string | undefined {
-        return this._logMessage;
+        this.enabled = enabled || false;
+        this.condition = condition;
+        this.hitCondition = hitCondition;
+        this.logMessage = logMessage;
     }
 }
 
@@ -1714,18 +1698,14 @@ export class SourceBreakpoint extends Breakpoint {
     /**
      * The source and line position of this breakpoint.
      */
-    private _location: Location;
+    location: Location;
 
     /**
      * Create a new breakpoint for a source location.
      */
     constructor(location: Location, enabled?: boolean, condition?: string, hitCondition?: string, logMessage?: string) {
         super(enabled, condition, hitCondition, logMessage);
-        this._location = location;
-    }
-
-    get location(): Location {
-        return this._location;
+        this.location = location;
     }
 }
 
@@ -1736,17 +1716,13 @@ export class FunctionBreakpoint extends Breakpoint {
     /**
      * The name of the function to which this breakpoint is attached.
      */
-    private _functionName: string;
+    functionName: string;
 
     /**
      * Create a new function breakpoint.
      */
     constructor(functionName: string, enabled?: boolean, condition?: string, hitCondition?: string, logMessage?: string) {
         super(enabled, condition, hitCondition, logMessage);
-        this._functionName = functionName;
-    }
-
-    get functionName(): string {
-        return this._functionName;
+        this.functionName = functionName;
     }
 }
