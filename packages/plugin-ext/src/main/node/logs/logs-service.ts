@@ -42,7 +42,7 @@ export class LogServiceImpl implements LogService {
         const parentLogDir = await this.getParentLogDirPath();
 
         if (!parentLogDir) {
-            return Promise.reject('Unable to get parent log directory');
+            return Promise.reject(new Error('Unable to get parent log directory'));
         }
 
         if (parentLogDir && await !this.fs.exists(parentLogDir)) {

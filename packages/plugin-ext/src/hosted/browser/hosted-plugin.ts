@@ -65,66 +65,67 @@ export class HostedPluginSupport {
     }
 
     public initPlugins(): void {
-        Promise.all([this.server.getDeployedMetadata(), this.server.getHostedPlugin(), this.server.getExtPluginAPI()]).then(metadata => {
+        Promise.all([this.server.getDeployedMetadata(),
+                     this.server.getHostedPlugin(),
+                     this.logService.provideHostLogDir(),
+                     this.server.getExtPluginAPI(),
+                     ]).then((metadata) => {
             const plugins = [...metadata['0']];
             if (metadata['1']) {
                 plugins.push(metadata['1']!);
             }
-            this.loadPlugins(plugins, this.container, metadata['2']);
+            const confStorage: ConfigStorage = {hostLogPath: metadata['2']};
+            this.loadPlugins(plugins,  this.container, metadata['3'], confStorage);
         });
 
     }
-    loadPlugins(pluginsMetadata: PluginMetadata[], container: interfaces.Container, extApi: ExtPluginApi[]): void {
+    loadPlugins(pluginsMetadata: PluginMetadata[], container: interfaces.Container, extApi: ExtPluginApi[], confStorage: ConfigStorage): void {
         const [frontend, backend] = this.initContributions(pluginsMetadata);
         this.theiaReadyPromise.then(() => {
-            this.logService.provideHostLogDir().then(logHostPath => {
-                const confStorage: ConfigStorage = {hostLogPath: logHostPath};
-                if (frontend) {
-                    const worker = new PluginWorker();
-                    const hostedExtManager = worker.rpc.getProxy(MAIN_RPC_CONTEXT.HOSTED_PLUGIN_MANAGER_EXT);
+            if (frontend) {
+                const worker = new PluginWorker();
+                const hostedExtManager = worker.rpc.getProxy(MAIN_RPC_CONTEXT.HOSTED_PLUGIN_MANAGER_EXT);
+                hostedExtManager.$init({
+                    plugins: pluginsMetadata,
+                    preferences: this.preferenceServiceImpl.getPreferences(),
+                    env: { queryParams: getQueryParameters() },
+                    extApi: extApi
+                }, confStorage);
+                setUpPluginApi(worker.rpc, container);
+                this.mainPluginApiProviders.getContributions().forEach(p => p.initialize(worker.rpc, container));
+            }
 
+            if (backend) {
+                // sort plugins per host
+                const pluginsPerHost = pluginsMetadata.reduce((map: any, pluginMetadata) => {
+                    const host = pluginMetadata.host;
+                    if (!map[host]) {
+                        map[host] = [pluginMetadata];
+                    } else {
+                        map[host].push(pluginMetadata);
+                    }
+                    return map;
+                }, {});
+
+                // create one RPC per host and init.
+                Object.keys(pluginsPerHost).forEach(hostKey => {
+                    const plugins: PluginMetadata[] = pluginsPerHost[hostKey];
+                    let pluginID = hostKey;
+                    if (plugins.length === 1) {
+                        pluginID = getPluginId(plugins[0].model);
+                    }
+                    const rpc = this.createServerRpc(pluginID, hostKey);
+                    const hostedExtManager = rpc.getProxy(MAIN_RPC_CONTEXT.HOSTED_PLUGIN_MANAGER_EXT);
                     hostedExtManager.$init({
-                        plugins: pluginsMetadata,
+                        plugins: plugins,
                         preferences: this.preferenceServiceImpl.getPreferences(),
                         env: { queryParams: getQueryParameters() },
                         extApi: extApi
                     }, confStorage);
-                    setUpPluginApi(worker.rpc, container);
-                    this.mainPluginApiProviders.getContributions().forEach(p => p.initialize(worker.rpc, container));
-                }
-
-                if (backend) {
-                    // sort plugins per host
-                    const pluginsPerHost = pluginsMetadata.reduce((map: any, pluginMetadata) => {
-                        const host = pluginMetadata.host;
-                        if (!map[host]) {
-                            map[host] = [pluginMetadata];
-                        } else {
-                            map[host].push(pluginMetadata);
-                        }
-                        return map;
-                    }, {});
-
-                    // create one RPC per host and init.
-                    Object.keys(pluginsPerHost).forEach(hostKey => {
-                        const plugins: PluginMetadata[] = pluginsPerHost[hostKey];
-                        let pluginID = hostKey;
-                        if (plugins.length === 1) {
-                            pluginID = getPluginId(plugins[0].model);
-                        }
-                        const rpc = this.createServerRpc(pluginID, hostKey);
-                        const hostedExtManager = rpc.getProxy(MAIN_RPC_CONTEXT.HOSTED_PLUGIN_MANAGER_EXT);
-                        hostedExtManager.$init({
-                            plugins: plugins,
-                            preferences: this.preferenceServiceImpl.getPreferences(),
-                            env: { queryParams: getQueryParameters() },
-                            extApi: extApi
-                        }, confStorage);
-                        setUpPluginApi(rpc, container);
-                        this.mainPluginApiProviders.getContributions().forEach(p => p.initialize(rpc, container));
-                    });
-                }
-            });
+                    setUpPluginApi(rpc, container);
+                    this.mainPluginApiProviders.getContributions().forEach(p => p.initialize(rpc, container));
+                });
+            }
         });
     }
 
