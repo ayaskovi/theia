@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (C) 2018 Ericsson and others.
+ * Copyright (C) 2018 Red Hat, Inc. and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -14,40 +14,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
- /* message container */
-.theia-alert-message-container {
-    flex: 1;
-    padding: 10px;
-}
+import { ContainerModule } from 'inversify';
+import { CommandContribution } from '@theia/core';
+import { PluginVscodeCommandsContribution } from './plugin-vscode-commands-contribution';
 
-.theia-alert-message-container i {
-    padding-right: 3px;
-}
-
-/* information message */
-.theia-info-alert {
-    background-color: var(--theia-brand-color0);
-    color: #ffffff;
-    padding: 10px;
-}
-
-/* success message */
-.theia-success-alert {
-    background-color: var(--theia-success-color0);
-    color: #ffffff;
-    padding: 10px;
-}
-
-/* warning message */
-.theia-warning-alert {
-    background-color: var(--theia-warn-color0);
-    color: var(--theia-warn-font-color0);
-    padding: 10px;
-}
-
-/* error message */
-.theia-error-alert {
-    background-color: var(--theia-error-color0);
-    color: #ffffff;
-    padding: 10px;
-}
+export default new ContainerModule(bind => {
+    bind(PluginVscodeCommandsContribution).toSelf().inSingletonScope();
+    bind(CommandContribution).toDynamicValue(context => context.container.get(PluginVscodeCommandsContribution));
+});
