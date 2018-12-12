@@ -46,6 +46,7 @@ import { ViewRegistry } from './view/view-registry';
 import { TextContentResourceResolver } from './workspace-main';
 import { MainPluginApiProvider } from '../../common/plugin-ext-api-contribution';
 import { PluginPathsService, pluginPathsServicePath } from '../common/plugin-paths-protocol';
+import { KeybindingsContributionPointHandler } from './keybindings/keybindings-contribution-handler';
 
 export default new ContainerModule(bind => {
     bindHostedPluginPreferences(bind);
@@ -102,6 +103,8 @@ export default new ContainerModule(bind => {
 
     bind(ViewRegistry).toSelf().inSingletonScope();
     bind(MenusContributionPointHandler).toSelf().inSingletonScope();
+
+    bind(KeybindingsContributionPointHandler).toSelf().inSingletonScope();
 
     bind(PluginContributionHandler).toSelf().inSingletonScope();
 

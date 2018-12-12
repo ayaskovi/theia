@@ -107,7 +107,9 @@ export class SearchInWorkspaceWidget extends BaseWidget implements StatefulWidge
             this.hasResults = r.size > 0;
             this.resultNumber = 0;
             const results = Array.from(r.values());
-            results.forEach(result => this.resultNumber += result.children.length);
+            results.forEach(rootFolder =>
+                rootFolder.children.forEach(file => this.resultNumber += file.children.length)
+            );
             this.update();
         }));
 
@@ -162,7 +164,7 @@ export class SearchInWorkspaceWidget extends BaseWidget implements StatefulWidge
 
     protected onAfterAttach(msg: Message) {
         super.onAfterAttach(msg);
-        ReactDOM.render(<React.Fragment>{this.renderSearchHeader()}</React.Fragment>, this.searchFormContainer);
+        ReactDOM.render(<React.Fragment>{this.renderSearchHeader()}{this.renderSearchInfo()}</React.Fragment>, this.searchFormContainer);
         Widget.attach(this.resultTreeWidget, this.contentNode);
         this.toDisposeOnDetach.push(Disposable.create(() => {
             Widget.detach(this.resultTreeWidget);
@@ -171,7 +173,7 @@ export class SearchInWorkspaceWidget extends BaseWidget implements StatefulWidge
 
     protected onUpdateRequest(msg: Message) {
         super.onUpdateRequest(msg);
-        ReactDOM.render(<React.Fragment>{this.renderSearchHeader()}</React.Fragment>, this.searchFormContainer);
+        ReactDOM.render(<React.Fragment>{this.renderSearchHeader()}{this.renderSearchInfo()}</React.Fragment>, this.searchFormContainer);
     }
 
     protected onResize(msg: Widget.ResizeMessage): void {
@@ -469,5 +471,20 @@ export class SearchInWorkspaceWidget extends BaseWidget implements StatefulWidge
 
     protected splitOnComma(patterns: string): string[] {
         return patterns.split(',').map(s => s.trim());
+    }
+
+    protected renderSearchInfo(): React.ReactNode {
+        let message = '';
+        const includeValid = (this.searchInWorkspaceOptions.include
+            && this.searchInWorkspaceOptions.include.length === 1
+            && this.searchInWorkspaceOptions.include[0] === '');
+        if (!includeValid && this.resultNumber === 0) {
+            message = `No results found in '${this.searchInWorkspaceOptions.include}'`;
+        } else if (this.resultNumber === 0) {
+            message = 'No results found.';
+        } else {
+            message = `${this.resultNumber} results in ${this.resultTreeWidget.fileNumber} files`;
+        }
+        return this.searchTerm !== '' ? <div className='search-info'>{message}</div> : '';
     }
 }
