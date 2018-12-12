@@ -17,40 +17,34 @@
 import { injectable, inject } from  'inversify';
 import { FileSystem } from '@theia/filesystem/lib/common';
 import { join } from 'path';
-import { PluginConf } from '../config/const';
 import URI from '@theia/core/lib/common/uri';
 import { isWindows } from '@theia/core';
+import { PluginPaths } from './const';
+import { PluginPathsService } from '../../common/plugin-paths-protocol';
 
-export const logServicePath = '/services/logs';
-
-export const LogService = Symbol('LogService');
-export interface LogService {
-    // Return hosted log dir. Create this folder if it is not exist on the file system.
-    provideHostLogDir(): Promise<string>
-}
-
+// Service to provide configuration paths for plugin api.
 @injectable()
-export class LogServiceImpl implements LogService {
-    private logDirName: string = 'logs';
-    private windowsConfFolders = [PluginConf.APP_DATA_WINDOWS_FOLDER, PluginConf.ROAMING_WINDOWS_FOLDER];
-    private linuxConfFolders = [PluginConf.LINUX_CONF_FOLDER];
+export class PluginPathsServiceImpl implements PluginPathsService {
+
+    private windowsConfFolders = [PluginPaths.APP_DATA_WINDOWS_FOLDER, PluginPaths.ROAMING_WINDOWS_FOLDER];
+    private linuxConfFolders = [PluginPaths.LINUX_CONF_FOLDER];
 
     constructor(@inject(FileSystem) readonly fs: FileSystem) {
     }
 
-    async provideHostLogDir(): Promise<string> {
+    async provideHostLogPath(): Promise<string> {
         const parentLogDir = await this.getParentLogDirPath();
 
         if (!parentLogDir) {
             return Promise.reject(new Error('Unable to get parent log directory'));
         }
 
-        if (parentLogDir && await !this.fs.exists(parentLogDir)) {
+        if (parentLogDir && !await this.fs.exists(parentLogDir)) {
             await this.fs.createFolder(parentLogDir);
         }
 
         const pluginDirPath = join(parentLogDir, this.gererateTimeFolderName(), 'host');
-        if (! await this.fs.exists(pluginDirPath)) {
+        if (!await this.fs.exists(pluginDirPath)) {
             await this.fs.createFolder(pluginDirPath);
         }
 
@@ -69,8 +63,8 @@ export class LogServiceImpl implements LogService {
             parentLogDirPath = join(
                 userHomeDir.uri,
                 ...(isWindows ? this.windowsConfFolders : this.linuxConfFolders),
-                PluginConf.APPLICATION_CONF_FOLDER,
-                this.logDirName
+                PluginPaths.APPLICATION_CONF_FOLDER,
+                PluginPaths.LOG_PARENT_FOLDER_NAME
             );
         }
         return parentLogDirPath;

@@ -45,7 +45,7 @@ import { PluginContributionHandler } from './plugin-contribution-handler';
 import { ViewRegistry } from './view/view-registry';
 import { TextContentResourceResolver } from './workspace-main';
 import { MainPluginApiProvider } from '../../common/plugin-ext-api-contribution';
-import { LogService, logServicePath } from '../node/logs/logs-service';
+import { PluginPathsService, pluginPathsServicePath } from '../common/plugin-paths-protocol';
 
 export default new ContainerModule(bind => {
     bindHostedPluginPreferences(bind);
@@ -81,9 +81,9 @@ export default new ContainerModule(bind => {
         return connection.createProxy<HostedPluginServer>(hostedServicePath, hostedWatcher.getHostedPluginClient());
     }).inSingletonScope();
 
-    bind(LogService).toDynamicValue(ctx => {
+    bind(PluginPathsService).toDynamicValue(ctx => {
         const connection = ctx.container.get(WebSocketConnectionProvider);
-        return connection.createProxy<LogService>(logServicePath);
+        return connection.createProxy<PluginPathsService>(pluginPathsServicePath);
     }).inSingletonScope();
 
     bindViewContribution(bind, PluginFrontendViewContribution);

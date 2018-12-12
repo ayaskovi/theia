@@ -28,7 +28,7 @@ import { PreferenceServiceImpl } from '@theia/core/lib/browser';
 import { PluginContributionHandler } from '../../main/browser/plugin-contribution-handler';
 import { getQueryParameters } from '../../main/browser/env-main';
 import { ExtPluginApi, MainPluginApiProvider } from '../../common/plugin-ext-api-contribution';
-import { LogService } from '../../main/node/logs/logs-service';
+import { PluginPathsService } from '../../main/common/plugin-paths-protocol';
 
 @injectable()
 export class HostedPluginSupport {
@@ -54,7 +54,7 @@ export class HostedPluginSupport {
 
     constructor(
         @inject(PreferenceServiceImpl) private readonly preferenceServiceImpl: PreferenceServiceImpl,
-        @inject(LogService) private readonly logService: LogService,
+        @inject(PluginPathsService) private readonly pluginPathsService: PluginPathsService,
     ) {
         this.theiaReadyPromise = Promise.all([this.preferenceServiceImpl.ready]);
     }
@@ -67,9 +67,9 @@ export class HostedPluginSupport {
     public initPlugins(): void {
         Promise.all([this.server.getDeployedMetadata(),
                      this.server.getHostedPlugin(),
-                     this.logService.provideHostLogDir(),
+                     this.pluginPathsService.provideHostLogPath(),
                      this.server.getExtPluginAPI(),
-                     ]).then((metadata) => {
+                     ]).then(metadata => {
             const plugins = [...metadata['0']];
             if (metadata['1']) {
                 plugins.push(metadata['1']!);
